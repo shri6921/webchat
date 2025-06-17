@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Mobile Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+        #chat-box {
+            border: 1px solid #ccc;
+            height: 70vh;
+            overflow-y: scroll;
+            padding: 10px;
+            background-color: #fff;
+            margin-bottom: 10px;
+        }
+        #message-input {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #send-button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .sent {
+            background-color: #d1e7dd;
+            margin-left: 20%;
+            text-align: right;
+        }
+        .received {
+            background-color: #f8d7da;
+            margin-right: 20%;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-box"></div>
+    <input type="text" id="message-input" placeholder="Type your message...">
+    <button id="send-button" onclick="sendMessage()">Send</button>
+
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBOExAkPVV8qNB1iINxV4DAd7xDdhJM7GQ",
+            authDomain: "webchat-cfeed.firebaseapp.com",
+            projectId: "webchat-cfeed",
+            storageBucket: "webchat-cfeed.firebasestorage.app",
+            messagingSenderId: "604977981233",
+            appId: "1:604977981233:web:f3d95979649ed30e003210",
+            measurementId: "G-1PX3JHZKPX"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const chatRef = ref(database, 'chat');
+
+        // Get user name
+        let userName = prompt("Enter your name:");
+        if (!userName) userName = "Anonymous";
+
+        // Send message
+        window.sendMessage = function() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+            if (message) {
+                push(chatRef, {
+                    name: userName,
+                    message: message,
+                    timestamp: Date.now()
+                });
+                messageInput.value = '';
+            }
+        };
+
+        // Listen for new messages
+        onChildAdded(chatRef, (snapshot) => {
+            const msg = snapshot.val();
+            const chatBox = document.getElementById('chat-box');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(msg.name === userName ? 'sent' : 'received');
+            messageElement.innerHTML = `<strong>${msg.name}:</strong> ${msg.message}`;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        // Send message on Enter key
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
